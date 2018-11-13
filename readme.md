@@ -6,7 +6,7 @@ A tool to handle mongodb migrations from within nodejs
 
 ## Introduction
 
-The package exports methods that can be used to handle mongodb migrations from within nodejs.
+The package exports methods that can be used to handle mongodb migrations using the cli and nodejs .
 
 ## Basic usage
 

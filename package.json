@@ -1,7 +1,7 @@
 {
   "name": "mogront",
   "version": "1.0.0",
-  "description": "A tool to handle mongodb migrations from within nodejs",
+  "description": "A tool to handle mongodb migrations from the cli and nodejs",
   "main": "./build/mogront.js",
   "files": [
     "build",
