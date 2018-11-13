@@ -6,7 +6,7 @@ A tool to handle mongodb migrations from within nodejs
 
 ## Introduction
 
-The package exports methods that can be used to handle mongodb migrations using the cli and nodejs .
+The package exports methods that can be used to handle mongodb migrations using the cli and nodejs.
 
 ## Basic usage
 
@@ -18,7 +18,7 @@ should be submitted with unit tests relevant to your work.
 
 ## License
 
-Copyright (c) 2017 Kieron Wiltshire
+Copyright (c) 2018 Kieron Wiltshire
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
