@@ -75,7 +75,13 @@ export default class Mogront {
    * @returns {Promise<Object>}
    */
   async status() {
-
+    /** TODO: read the migrations directory and compare it to the state stored in the database
+     *        and then provide their status whether it be pending or executed.
+     *
+     *        It would also be a good idea to return the timestamp for each migration to be
+     *        used as a batch identifier as multiple migrations should have the same timestamp
+     *        which will show when they were executed, thus giving them the same batch identifier.
+     */
   }
 
   /**
@@ -84,7 +90,9 @@ export default class Mogront {
    * @returns {void}
    */
   async migrate() {
-
+    /** TODO: Retrieve the status of each migration, generate a timestamp and then execute the
+     *        migrations that are pending, providing the timestamp as it's batch identifier.
+     */
   }
 
   /**
@@ -94,7 +102,11 @@ export default class Mogront {
    * @returns {void}
    */
   async rollback(all) {
-
+    /** TODO: Sort the migrations by it's timestamp which is used as a batch identifier, and rollback
+     *        the migrations that match the last specified timestamp.
+     *
+     *        If all is specified, ignore the timestamps and rollback each migration.
+     */
   }
 
 }
