@@ -7,7 +7,7 @@ import Monk from 'monk';
 import ChangeCase from 'change-case';
 import {default as createDebugger} from 'debug';
 
-const debug = createDebugger('mogront:bootstrap');
+const debug = createDebugger('mogront');
 
 /**
  *
