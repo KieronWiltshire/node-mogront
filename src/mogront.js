@@ -81,12 +81,6 @@ export default class Mogront {
     let fileExtension = '.js';
     let filePath = path.join(this._migrationsDir, fileName + fileExtension);
 
-    /**
-     * TODO:  Create a javascript file with the specified name in the migrations directory
-     *        with a default structure copied over from a template. It should include and up
-     *        and a down method.
-     */
-
     if (fs.existsSync(filePath)) {
       throw new Error('The file to generate seems to have already been created, [' + filePath + ']');
     } else {
