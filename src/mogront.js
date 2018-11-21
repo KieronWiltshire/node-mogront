@@ -4,6 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import Monk from 'monk';
+import ChangeCase from 'change-case';
 import {default as createDebugger} from 'debug';
 
 const debug = createDebugger('mogront:bootstrap');
@@ -66,6 +67,19 @@ export default class Mogront {
    * @returns {boolean} true if the migration file was created successfully
    */
   create(name) {
+    name = ChangeCase.snakeCase(name);
+
+    let creationTimestamp = new Date();
+    let creationDate = ('0' + creationTimestamp.getDate()).slice(-2);
+    let creationMonth = ('0' + (creationTimestamp.getMonth() + 1)).slice(-2);
+    let creationYear = creationTimestamp.getFullYear();
+    let creationHour = ('0' + creationTimestamp.getHours()).slice(-2);
+    let creationMinute = ('0' + creationTimestamp.getMinutes()).slice(-2);
+    let creationSecond = ('0' + creationTimestamp.getSeconds()).slice(-2);
+
+    let fileName = creationYear + '_' + creationMonth + '_' + creationDate + '_' + creationHour + '_' + creationMinute + '_' + creationSecond + '_' + name;
+    let fileExtension = '.js';
+
     /**
      * TODO:  Create a javascript file with the specified name in the migrations directory
      *        with a default structure copied over from a template. It should include and up

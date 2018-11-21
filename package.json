@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/kieronwiltshire/node-mogront#readme",
   "dependencies": {
+    "change-case": "^3.0.2",
     "debug": "^2.6.8"
   },
   "devDependencies": {
