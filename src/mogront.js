@@ -19,10 +19,12 @@ export default class Mogront {
    */
   constructor(monk, {
     collectionName = 'mogront', // The name of the collection that will store migration state
-    migrationsDir = './migrations' // Relative path to the migrations directory
+    migrationsDir = './migrations', // Relative path to the migrations directory
+    seedersDir = './seeders' // Relative path to the seeders directory
   } = {}) {
     collectionName = collectionName.toString();
     migrationsDir = path.join(process.cwd(), migrationsDir);
+    seedersDir = path.join(process.cwd(), seedersDir);
 
     if (!(monk instanceof Monk)) {
       throw new Exception('The first argument needs to be an instance of {Monk}.')
@@ -36,10 +38,18 @@ export default class Mogront {
       fs.mkdirSync(migrationsDir);
     }
 
+    if (!fs.existsSync(seedersDir)) {
+      fs.mkdirSync(seedersDir);
+    }
+
     this._monk = monk;
     this._collectionName = collectionName;
     this._migrationsDir = migrationsDir;
+    this._seedersDir = seedersDir;
+
     this._collection = monk.create(collectionName);
+
+    this.createSeeder('seeder');
   }
 
   /**
@@ -61,12 +71,21 @@ export default class Mogront {
   }
 
   /**
+   * Retrieve the path to the seeders directory.
+   *
+   * @returns {string}
+   */
+  getSeedersDirectory() {
+    return this._seedersDir;
+  }
+
+  /**
    * Create a migration.
    *
    * @param {string} name The name of the migration
    * @returns {boolean} true if the migration file was created successfully
    */
-  create(name) {
+  createMigration(name) {
     name = ChangeCase.snakeCase(name.toLowerCase());
 
     let creationTimestamp = new Date();
@@ -84,7 +103,26 @@ export default class Mogront {
     if (fs.existsSync(filePath)) {
       throw new Error('The file to generate seems to have already been created, [' + filePath + ']');
     } else {
-      fs.createReadStream(path.resolve(__dirname, 'templates', 'vanilla.js')).pipe(fs.createWriteStream(filePath));
+      fs.createReadStream(path.resolve(__dirname, 'templates', 'vanilla-migration.js')).pipe(fs.createWriteStream(filePath));
+      return (fileName + fileExtension);
+    }
+  }
+
+  /**
+   * Create a seeder.
+   *
+   * @param {string} name The name of the seeder
+   * @returns {boolean} true if the seeder file was created successfully
+   */
+  createSeeder(name) {
+    let fileName = ChangeCase.snakeCase(name.toLowerCase());
+    let fileExtension = '.js';
+    let filePath = path.join(this._migrationsDir, fileName + fileExtension);
+
+    if (fs.existsSync(filePath)) {
+      throw new Error('The file to generate seems to have already been created, [' + filePath + ']');
+    } else {
+      fs.createReadStream(path.resolve(__dirname, 'templates', 'vanilla-seeder.js')).pipe(fs.createWriteStream(filePath));
       return (fileName + fileExtension);
     }
   }
@@ -92,7 +130,7 @@ export default class Mogront {
   /**
    * Retrieve the status of each migration.
    *
-   * @returns {Promise<Object>}
+   * @returns {Promise<Array>} The state of each migration
    */
   async state() {
     let collection = await this._monk.create(this._collectionName);
@@ -124,7 +162,7 @@ export default class Mogront {
   /**
    * Migrate the latest.
    *
-   * @returns {void}
+   * @returns {Promise<Array>} All of the migrations that were executed
    */
   async migrate() {
     let collection = await this._monk.create(this._collectionName);
@@ -180,7 +218,7 @@ export default class Mogront {
    * Rollback previous migrations.
    *
    * @param {boolean} all If all is specified it will rollback all of the history regardless of batch
-   * @returns {void}
+   * @returns {Promise<Array>} All of the migrations that were rolled back
    */
   async rollback(all) {
     let collection = await this._monk.create(this._collectionName);
@@ -241,6 +279,16 @@ export default class Mogront {
     }
 
     return rolledback;
+  }
+
+  /**
+   * Rollback previous migrations.
+   *
+   * @param {boolean} all If all is specified it will rollback all of the history regardless of batch
+   * @returns {Promise<void>}
+   */
+  async seed() {
+    // TODO:
   }
 
 }

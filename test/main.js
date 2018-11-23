@@ -8,7 +8,8 @@ import {default as Database, hasDatabaseConnection} from './database';
 
 let defaultOptions = {
   collectionName: 'mogront',
-  migrationsDir: path.join('./test/migrations')
+  migrationsDir: path.join('./test/migrations'),
+  seedersDir: path.join('./test/seeders')
 };
 
 describe('mogront', function() {
