@@ -96,7 +96,7 @@ export default class Mogront {
    */
   async state() {
     let collection = await this._monk.create(this._collectionName);
-    let state = await collection.find({});
+    let state = await collection.find({}, { sort: { executedOn: -1 } });
     let migrations = fs.readdirSync(this._migrationsDir);
 
     for (let i = 0; i < migrations.length; i++) {
