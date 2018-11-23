@@ -183,12 +183,6 @@ export default class Mogront {
    * @returns {void}
    */
   async rollback(all) {
-    /**
-     * TODO:  Sort the migrations by it's timestamp which is used as a batch identifier, and rollback
-     *        the migrations that match the last specified timestamp.
-     *
-     *        If all is specified, ignore the timestamps and rollback each migration.
-     */
     let collection = await this._monk.create(this._collectionName);
     let migrations = fs.readdirSync(this._migrationsDir);
     let state = await this.state();
