@@ -166,7 +166,7 @@ export default class Mogront {
           executedOn
         });
       } catch (error) {
-        throw new Error('[' + pending[i] + '] failed.');
+        throw new Error('[' + pending[i] + '] failed to migrate.');
         break;
       }
     }
@@ -189,6 +189,64 @@ export default class Mogront {
      *
      *        If all is specified, ignore the timestamps and rollback each migration.
      */
+    let collection = await this._monk.create(this._collectionName);
+    let migrations = fs.readdirSync(this._migrationsDir);
+    let state = await this.state();
+    let rolledback = [];
+
+    if (state.length > 0) {
+      state = state.filter((k) => {
+        if (k.status === 'EXECUTED') {
+          return k;
+        }
+      });
+
+      if (!all) {
+        let lastBatchExecutedOn = state[0].executedOn;
+
+        state = state.filter((k) => {
+          if ((k.status === 'EXECUTED') && (k.executedOn === lastBatchExecutedOn)) {
+            return k;
+          }
+        })
+      }
+    }
+
+    for (let i = 0; i < migrations.length; i++) {
+      let migrationName = path.parse(migrations[i]).name;
+
+      for (let n = 0; n < state.length; n++) {
+        if (state[n].name === migrationName) {
+          let migration = require(path.join(this.getMigrationsDirectory(), migrations[i]));
+
+          try {
+            let result = migration.down(this._monk);
+
+            if (result instanceof Promise) {
+              result = await result;
+            }
+
+            let migrationFile = path.parse(path.join(this.getMigrationsDirectory(), migrations[i]));
+            let migrationFileName = migrationFile.name;
+
+            rolledback.push({
+              name: migrationFileName
+            });
+          } catch (error) {
+            throw new Error('[' + migrations[i] + '] failed to rollback.');
+            break;
+          }
+
+          break;
+        }
+      }
+    }
+
+    for (let i = 0; i < rolledback.length; i++) {
+      await collection.remove({ name: rolledback[i].name });
+    }
+
+    return rolledback;
   }
 
 }

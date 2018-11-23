@@ -73,9 +73,10 @@ describe('mogront', function() {
   //     let mogront = new Mogront(Database, defaultOptions);
   //
   //     mogront.migrate().then(function(state) {
-  //       console.log(state);
+  //       return mogront.rollback(true);
+  //     }).then(function() {
   //       done();
-  //     });
+  //     }).catch(done);
   //   } catch (error) {
   //     done(error);
   //   }
