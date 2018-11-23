@@ -3,4 +3,3 @@
 npm-debug.log
 /test/config.json
 /test/migrations
-/test/seeders
