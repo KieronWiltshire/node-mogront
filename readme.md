@@ -13,8 +13,10 @@ The package exports methods that can be used to handle mongodb migrations using 
 
 ## Contributing
 
-Bootit makes use of [mocha][2] and [chai](3) in order to conduct it's unit tests, thus contributions
-should be submitted with unit tests relevant to your work.
+Mogront makes use of [mocha][2] and [chai](3) in order to conduct it's unit tests, thus contributions
+should be submitted with unit tests relevant to your work. Integration testing requires a database
+connection, you should copy the `config.json.example` file to `config.json` and replace the
+connection details with your own.
 
 ## License
 

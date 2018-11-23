@@ -1,6 +1,6 @@
-#!/usr/bin/env node
 'use strict';
 
+import _ from 'lodash';
 import fs from 'fs';
 import path from 'path';
 import Monk from 'monk';
@@ -67,7 +67,7 @@ export default class Mogront {
    * @returns {boolean} true if the migration file was created successfully
    */
   create(name) {
-    name = ChangeCase.snakeCase(name);
+    name = ChangeCase.snakeCase(name.toLowerCase());
 
     let creationTimestamp = new Date();
     let creationDate = ('0' + creationTimestamp.getDate()).slice(-2);
@@ -85,6 +85,7 @@ export default class Mogront {
       throw new Error('The file to generate seems to have already been created, [' + filePath + ']');
     } else {
       fs.createReadStream(path.resolve(__dirname, 'templates', 'vanilla.js')).pipe(fs.createWriteStream(filePath));
+      return (fileName + fileExtension);
     }
   }
 
@@ -93,15 +94,31 @@ export default class Mogront {
    *
    * @returns {Promise<Object>}
    */
-  async status() {
-    /**
-     * TODO:  Read the migrations directory and compare it to the state stored in the database
-     *        and then provide their status whether it be pending or executed.
-     *
-     *        It would also be a good idea to return the timestamp for each migration to be
-     *        used as a batch identifier as multiple migrations should have the same timestamp
-     *        which will show when they were executed, thus giving them the same batch identifier.
-     */
+  async state() {
+    let collection = await this._monk.create(this._collectionName);
+    let state = await collection.find({});
+    let migrations = fs.readdirSync(this._migrationsDir);
+
+    for (let i = 0; i < migrations.length; i++) {
+      let migrationName = path.parse(migrations[i]).name;
+      let isPending = true;
+
+      for (let n = 0; n < state.length; n++) {
+        if (state[n].name === migrationName) {
+          isPending = false;
+          break;
+        }
+      }
+
+      if (isPending) {
+        state.push({
+          name: migrationName,
+          status: 'PENDING'
+        });
+      }
+    }
+
+    return state;
   }
 
   /**
@@ -110,10 +127,53 @@ export default class Mogront {
    * @returns {void}
    */
   async migrate() {
-    /**
-     * TODO:  Retrieve the status of each migration, generate a timestamp and then execute the
-     *        migrations that are pending, providing the timestamp as it's batch identifier.
-     */
+    let collection = await this._monk.create(this._collectionName);
+    let migrations = fs.readdirSync(this._migrationsDir);
+    let state = await this.state();
+    let pending = [];
+    let success = [];
+    let executedOn = new Date().getTime();
+
+    for (let i = 0; i < migrations.length; i++) {
+      let migrationName = path.parse(migrations[i]).name;
+
+      for (let n = 0; n < state.length; n++) {
+        if (state[n].name === migrationName) {
+          if (state[n].status === 'PENDING') {
+            pending.push(migrations[i]);
+          }
+          break;
+        }
+      }
+    }
+
+    for (let i = 0; i < pending.length; i++) {
+      let migration = require(path.join(this.getMigrationsDirectory(), pending[i]));
+
+      try {
+        let result = migration.up(this._monk);
+
+        if (result instanceof Promise) {
+          result = await result;
+        }
+
+        let migrationFile = path.parse(path.join(this.getMigrationsDirectory(), pending[i]));
+        let migrationFileName = migrationFile.name;
+
+        success.push({
+          name: migrationFileName,
+          status: 'EXECUTED',
+          executedOn
+        });
+      } catch (error) {
+        throw new Error('[' + pending[i] + '] failed.');
+        break;
+      }
+    }
+
+    await collection.insert(success);
+
+    return success;
   }
 
   /**
