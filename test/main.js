@@ -7,6 +7,7 @@ import Mogront from '../src/mogront';
 import {default as Database, hasDatabaseConnection} from './database';
 
 let defaultOptions = {
+  collectionName: 'mogront',
   migrationsDir: path.join('./test/migrations')
 };
 
@@ -19,13 +20,17 @@ describe('mogront', function() {
 
     while (!hasDatabaseConnection) {} // Wait for the database to connect
 
-    if (fs.existsSync(migrationsDirPath)) {
-      fs.remove(migrationsDirPath, (error) => {
-        done(error);
-      });
-    } else {
-      done();
-    }
+    // Clean the directories and recorded state if any exist
+    Database.get(defaultOptions.collectionName).remove({})
+    .then(function() {
+      if (fs.existsSync(migrationsDirPath)) {
+        fs.remove(migrationsDirPath, (error) => {
+          done(error);
+        });
+      } else {
+        done();
+      }
+    }).catch(done);
   });
 
   it('should not create a new {Mogront} instance without an instance of {Monk} present', function(done) {
