@@ -54,7 +54,7 @@ describe('mogront', function() {
   it('should create a migration file with the specified name', function(done) {
     try {
       let mogront = new Mogront(Database, defaultOptions);
-      let fileName = mogront.create('create_test_collection');
+      let fileName = mogront.create('create test collection');
 
       if ((fileName.indexOf('create') > -1) && (fileName.indexOf('test') > -1) && (fileName.indexOf('collection') > -1)) {
         if (fs.existsSync(path.join(mogront.getMigrationsDirectory(), fileName))) {

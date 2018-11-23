@@ -23,7 +23,6 @@ export default class Mogront {
   } = {}) {
     collectionName = collectionName.toString();
     migrationsDir = path.join(process.cwd(), migrationsDir);
-    seedersDir = path.join(process.cwd(), seedersDir);
 
     if (!(monk instanceof Monk)) {
       throw new Exception('The first argument needs to be an instance of {Monk}.')
@@ -68,7 +67,7 @@ export default class Mogront {
    * @param {string} name The name of the migration
    * @returns {boolean} true if the migration file was created successfully
    */
-  createMigration(name) {
+  create(name) {
     name = ChangeCase.snakeCase(name.toLowerCase());
 
     let creationTimestamp = new Date();
@@ -204,7 +203,7 @@ export default class Mogront {
           if ((k.status === 'EXECUTED') && (k.executedOn === lastBatchExecutedOn)) {
             return k;
           }
-        })
+        });
       }
     }
 
