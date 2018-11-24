@@ -67,8 +67,21 @@ export default class Mogront {
    * @param {string} name The name of the migration
    * @returns {boolean} true if the migration file was created successfully
    */
-  create(name) {
+  create(name, {
+    template = 'vanilla'
+  } = {}) {
+    template = template.toLowerCase();
     name = ChangeCase.snakeCase(name.toLowerCase());
+
+    let templateFileExtension = '';
+
+    switch (template) {
+      case 'vanilla':
+      case 'es6':
+      default:
+        templateFileExtension = '.js';
+        break;
+    }
 
     let creationTimestamp = new Date();
     let creationDate = ('0' + creationTimestamp.getDate()).slice(-2);
@@ -85,7 +98,7 @@ export default class Mogront {
     if (fs.existsSync(filePath)) {
       throw new Error('The file to generate seems to have already been created, [' + filePath + ']');
     } else {
-      fs.createReadStream(path.resolve(__dirname, 'templates', 'vanilla.js')).pipe(fs.createWriteStream(filePath));
+      fs.createReadStream(path.resolve(__dirname, 'templates', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
       return (fileName + fileExtension);
     }
   }
