@@ -6,8 +6,8 @@ import Chai from 'chai';
 import Mogront from '../src/mogront';
 import {default as Database, hasDatabaseConnection} from './database';
 
-let defaultOptions = {
-  collectionName: 'mogront',
+let testOptions = {
+  collectionName: 'migrations',
   migrationsDir: path.join('./test/migrations')
 };
 
@@ -16,17 +16,15 @@ describe('mogront', function() {
   before(function(done) {
     this.timeout(10000);
 
-    let migrationsDirPath = path.join(process.cwd(), defaultOptions.migrationsDir);
+    let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
 
     while (!hasDatabaseConnection) {} // Wait for the database to connect
 
     // Clean the directories and recorded state if any exist
-    Database.get(defaultOptions.collectionName).remove({})
+    Database.get(testOptions.collectionName).remove({})
     .then(function() {
       if (fs.existsSync(migrationsDirPath)) {
-        fs.remove(migrationsDirPath, (error) => {
-          done(error);
-        });
+        fs.remove(migrationsDirPath, done);
       } else {
         done();
       }
@@ -35,7 +33,7 @@ describe('mogront', function() {
 
   it('should not create a new {Mogront} instance without an instance of {Monk} present', function(done) {
     try {
-      let mogront = new Mogront(null, defaultOptions);
+      let mogront = new Mogront(null, testOptions);
       done(new Error('A new {Monk} instance was created'));
     } catch (error) {
       done();
@@ -44,7 +42,7 @@ describe('mogront', function() {
 
   it('should create a new {Mogront} instance with an instance of {Monk} present', function(done) {
     try {
-      let mogront = new Mogront(Database, defaultOptions);
+      let mogront = new Mogront(Database, testOptions);
       done();
     } catch (error) {
       done(error);
@@ -53,7 +51,7 @@ describe('mogront', function() {
 
   it('should create a migration file with the specified name', function(done) {
     try {
-      let mogront = new Mogront(Database, defaultOptions);
+      let mogront = new Mogront(Database, testOptions);
       let fileName = mogront.create('create test collection');
 
       if ((fileName.indexOf('create') > -1) && (fileName.indexOf('test') > -1) && (fileName.indexOf('collection') > -1)) {
@@ -68,18 +66,14 @@ describe('mogront', function() {
     }
   });
 
-  // it('should ...', function(done) {
-  //   try {
-  //     let mogront = new Mogront(Database, defaultOptions);
-  //
-  //     mogront.migrate().then(function(state) {
-  //       return mogront.rollback(true);
-  //     }).then(function() {
-  //       done();
-  //     }).catch(done);
-  //   } catch (error) {
-  //     done(error);
-  //   }
-  // });
+  it('should copy the test_migration.js file into the migrations directory and execute it', function(done) {
+    try {
+      let mogront = new Mogront(Database, defaultOptions);
+
+      // TODO:
+    } catch (error) {
+      done(error);
+    }
+  });
 
 });

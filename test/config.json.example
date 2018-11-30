@@ -4,6 +4,6 @@
     "port": "27017",
     "user": "root",
     "password": "secret",
-    "db": "mogronttest"
+    "db": "mogrontdb"
   }
 }
