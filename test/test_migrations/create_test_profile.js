@@ -6,8 +6,9 @@
  * @param {Monk} monk The monk database instance
  * @returns {Promise}
  */
-export const up = async function(monk) {
-
+module.exports.up = function(monk) {
+  let collection = monk.get('profiles');
+  return collection.insert({ hello: 'world' });
 };
 
 /**
@@ -16,6 +17,6 @@ export const up = async function(monk) {
  * @param {Monk} monk The monk database instance
  * @returns {Promise}
  */
-export const down = async function(monk) {
-
+module.exports.down = function(monk) {
+  return monk.get('profiles').remove({});
 };

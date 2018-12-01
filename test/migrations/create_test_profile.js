@@ -7,7 +7,8 @@
  * @returns {Promise}
  */
 module.exports.up = function(monk) {
-
+  let collection = monk.get('profiles');
+  return collection.insert({ hello: 'world' });
 };
 
 /**
@@ -17,5 +18,5 @@ module.exports.up = function(monk) {
  * @returns {Promise}
  */
 module.exports.down = function(monk) {
-
+  return monk.get('profiles').remove({});
 };

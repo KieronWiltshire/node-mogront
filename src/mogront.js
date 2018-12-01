@@ -6,6 +6,7 @@ import path from 'path';
 import Monk from 'monk';
 import ChangeCase from 'change-case';
 import {default as createDebugger} from 'debug';
+import CombineErrors from 'combine-errors';
 
 const debug = createDebugger('mogront');
 
@@ -67,40 +68,48 @@ export default class Mogront {
    * @param {string} name The name of the migration
    * @returns {boolean} true if the migration file was created successfully
    */
-  create(name, {
+  async create(name, {
     template = 'vanilla'
   } = {}) {
-    template = template.toLowerCase();
-    name = ChangeCase.snakeCase(name.toLowerCase());
+    let self = this;
 
-    let templateFileExtension = '';
+    return new Promise(function(resolve, reject) {
+      template = template.toLowerCase();
+      name = ChangeCase.snakeCase(name.toLowerCase());
 
-    switch (template) {
-      case 'vanilla':
-      case 'es6':
-      default:
-        templateFileExtension = '.js';
-        break;
-    }
+      let templateFileExtension = '';
 
-    let creationTimestamp = new Date();
-    let creationDate = ('0' + creationTimestamp.getDate()).slice(-2);
-    let creationMonth = ('0' + (creationTimestamp.getMonth() + 1)).slice(-2);
-    let creationYear = creationTimestamp.getFullYear();
-    let creationHour = ('0' + creationTimestamp.getHours()).slice(-2);
-    let creationMinute = ('0' + creationTimestamp.getMinutes()).slice(-2);
-    let creationSecond = ('0' + creationTimestamp.getSeconds()).slice(-2);
+      switch (template) {
+        case 'vanilla':
+        case 'es6':
+        default:
+          templateFileExtension = '.js';
+          break;
+      }
 
-    let fileName = creationYear + '_' + creationMonth + '_' + creationDate + '_' + creationHour + '_' + creationMinute + '_' + creationSecond + '_' + name;
-    let fileExtension = '.js';
-    let filePath = path.join(this._migrationsDir, fileName + fileExtension);
+      let creationTimestamp = new Date();
+      let creationDate = ('0' + creationTimestamp.getDate()).slice(-2);
+      let creationMonth = ('0' + (creationTimestamp.getMonth() + 1)).slice(-2);
+      let creationYear = creationTimestamp.getFullYear();
+      let creationHour = ('0' + creationTimestamp.getHours()).slice(-2);
+      let creationMinute = ('0' + creationTimestamp.getMinutes()).slice(-2);
+      let creationSecond = ('0' + creationTimestamp.getSeconds()).slice(-2);
 
-    if (fs.existsSync(filePath)) {
-      throw new Error('The file to generate seems to have already been created, [' + filePath + ']');
-    } else {
-      fs.createReadStream(path.resolve(__dirname, 'templates', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
-      return (fileName + fileExtension);
-    }
+      let fileName = creationYear + '_' + creationMonth + '_' + creationDate + '_' + creationHour + '_' + creationMinute + '_' + creationSecond + '_' + name;
+      let fileExtension = '.js';
+      let filePath = path.join(self._migrationsDir, fileName + fileExtension);
+
+      if (fs.existsSync(filePath)) {
+        return reject(new Error('The file to generate seems to have already been created, [' + filePath + ']'));
+      } else {
+        let stream = fs.createReadStream(path.resolve(__dirname, 'templates', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
+
+        stream.on('error', reject);
+        stream.on('close', function () {
+          return resolve(fileName + fileExtension);
+        });
+      }
+    });
   }
 
   /**
@@ -180,8 +189,10 @@ export default class Mogront {
           executedOn
         });
       } catch (error) {
-        throw new Error('[' + pending[i] + '] failed to migrate.');
-        break;
+        throw new CombineErrors([
+          new Error('[' + pending[i] + '] failed to migrate.'),
+          error
+        ]);
       }
     }
 
@@ -241,8 +252,10 @@ export default class Mogront {
               name: migrationFileName
             });
           } catch (error) {
-            throw new Error('[' + migrations[i] + '] failed to rollback.');
-            break;
+            throw new CombineErrors([
+              new Error('[' + migrations[i] + '] failed to rollback.'),
+              error
+            ]);
           }
 
           break;

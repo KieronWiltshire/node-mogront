@@ -7,7 +7,8 @@
  * @returns {Promise}
  */
 module.exports.up = function(monk) {
-  return monk.create('users');
+  let collection = monk.get('users');
+  return collection.insert({ hello: 'world' });
 };
 
 /**
