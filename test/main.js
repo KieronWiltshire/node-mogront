@@ -67,7 +67,7 @@ describe('mogront', function() {
     }
   });
 
-  it('should clear the migrations directory', function(done) {
+  it('should delete the migrations directory and then recreate it so that it clears out the previous migration', function(done) {
     try {
       // Clear the directory to prevent an empty migration from running and giving an error
       let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
@@ -76,9 +76,17 @@ describe('mogront', function() {
         fs.removeSync(migrationsDirPath);
       }
 
-      let mogront = new Mogront(Database, testOptions); // Recreates the migrations directory
+      if (fs.existsSync(migrationsDirPath)) {
+        throw new Error('Unable to delete the migrations directory');
+      } else {
+        let mogront = new Mogront(Database, testOptions); // Recreates the migrations directory
 
-      return done();
+        if (fs.existsSync(migrationsDirPath)) {
+          return done();
+        } else {
+          throw new Error('Unable to recreate the migrations directory');
+        }
+      }
     } catch (error) {
       return done(error);
     }
