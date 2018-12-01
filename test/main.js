@@ -67,7 +67,7 @@ describe('mogront', function() {
     }
   });
 
-  it('should copy the test_migrations/create_test_user.js file into the migrations directory and execute it', function(done) {
+  it('should clear the migrations directory', function(done) {
     try {
       // Clear the directory to prevent an empty migration from running and giving an error
       let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
@@ -76,7 +76,16 @@ describe('mogront', function() {
         fs.removeSync(migrationsDirPath);
       }
 
-      // Create the mogront instance
+      let mogront = new Mogront(Database, testOptions); // Recreates the migrations directory
+
+      return done();
+    } catch (error) {
+      return done(error);
+    }
+  });
+
+  it('should copy the test_migrations/create_test_user.js file into the migrations directory', function(done) {
+    try {
       let mogront = new Mogront(Database, testOptions);
 
       // Copy the file over into the migrations directory
@@ -96,33 +105,34 @@ describe('mogront', function() {
       stream.on('error', done);
 
       // Continue
-      stream.on('close', function() {
-
-        // Check the file exists
-        if (fs.existsSync(path.join(mogront.getMigrationsDirectory(), fileName))) {
-          mogront.migrate().then(function(success) {
-            // TODO: check status
-            done();
-          }).catch(done);
-        } else {
-          return done(new Error('The test_migration.js file was not found in the new file path'));
-        }
-      });
+      stream.on('close', done);
     } catch (error) {
       return done(error);
     }
   });
 
-  it('should copy the test_migrations/create_test_profile.js file into the migrations directory and execute it', function(done) {
+  it('should execute the test_migrations/create_test_user.js file in the migrations directory', function(done) {
     try {
-      // Clear the directory to prevent an empty migration from running and giving an error
-      let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
+      let mogront = new Mogront(Database, testOptions);
 
-      if (fs.existsSync(migrationsDirPath)) {
-        fs.removeSync(migrationsDirPath);
+      let fileName = 'create_test_user.js';
+
+      // Check the file exists
+      if (fs.existsSync(path.join(mogront.getMigrationsDirectory(), fileName))) {
+        mogront.migrate().then(function(success) {
+          // TODO: check status
+          done();
+        }).catch(done);
+      } else {
+        return done(new Error('The test_migration.js file was not found in the new file path'));
       }
+    } catch (error) {
+      return done(error);
+    }
+  });
 
-      // Create the mogront instance
+  it('should copy the test_migrations/create_test_profile.js file into the migrations directory', function(done) {
+    try {
       let mogront = new Mogront(Database, testOptions);
 
       // Copy the file over into the migrations directory
@@ -142,22 +152,31 @@ describe('mogront', function() {
       stream.on('error', done);
 
       // Continue
-      stream.on('close', function() {
-
-        // Check the file exists
-        if (fs.existsSync(path.join(mogront.getMigrationsDirectory(), fileName))) {
-          mogront.migrate().then(function(success) {
-            // TODO: check status
-
-            done();
-          }).catch(done);
-        } else {
-          return done(new Error('The test_migration.js file was not found in the new file path'));
-        }
-      });
+      stream.on('close', done);
     } catch (error) {
       return done(error);
     }
   });
+
+  it('should execute the test_migrations/create_test_profile.js file in the migrations directory', function(done) {
+    try {
+      let mogront = new Mogront(Database, testOptions);
+
+      let fileName = 'create_test_profile.js';
+
+      // Check the file exists
+      if (fs.existsSync(path.join(mogront.getMigrationsDirectory(), fileName))) {
+        mogront.migrate().then(function(success) {
+          // TODO: check status
+          done();
+        }).catch(done);
+      } else {
+        return done(new Error('The test_migration.js file was not found in the new file path'));
+      }
+    } catch (error) {
+      return done(error);
+    }
+  });
+
 
 });
