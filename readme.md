@@ -1,5 +1,3 @@
-# NOTE: Development of this has been stopped until monk becomes a more production-ready library. PRs welcome :)
-
 # Mogront
 
 A tool to handle mongodb migrations from within nodejs
