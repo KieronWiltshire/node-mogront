@@ -2,4 +2,4 @@
 /build
 npm-debug.log
 /test/config.json
-/test/secondary-migrations
+/test/migrations

@@ -4,12 +4,13 @@ import fs from 'fs-extra';
 import path from 'path';
 import Chai from 'chai';
 import Mogront from '../src/mogront';
-import {default as Database, hasDatabaseConnection} from './database';
+import * as Database from '../src/database';
+import DatabaseConfig from './config.json';
 
-let testOptions = {
+let testOptions = Object.assign({
   collectionName: 'migrations',
   migrationsDir: path.join('./test/migrations')
-};
+}, DatabaseConfig);
 
 describe('mogront', function() {
 
@@ -18,11 +19,12 @@ describe('mogront', function() {
 
     let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
 
-    while (!hasDatabaseConnection) {} // Wait for the database to connect
+    let mogront = new Mogront(null, testOptions);
 
     // Clean the directories and recorded state if any exist
-    Database.get(testOptions.collectionName).remove({})
-    .then(function() {
+    mogront.mongo().then(function(connection) {
+      return connection.db(testOptions.db).dropDatabase();
+    }).then(function() {
       if (fs.existsSync(migrationsDirPath)) {
         fs.remove(migrationsDirPath, done);
       } else {
@@ -31,27 +33,28 @@ describe('mogront', function() {
     }).catch(done);
   });
 
-  it('should not create a new {Mogront} instance without an instance of {Monk} present', function(done) {
+  it('should create a new {Mogront} instance without an instance of {MongoDB.MongoClient} present', function(done) {
     try {
       let mogront = new Mogront(null, testOptions);
-      return done(new Error('A new {Monk} instance was created'));
-    } catch (error) {
       return done();
+    } catch (error) {
+      return done(new Error('An instance of {Mogront} could not be created'));
     }
   });
 
-  it('should create a new {Mogront} instance with an instance of {Monk} present', function(done) {
+  it('should create a new {Mogront} instance with an instance of {MongoDB} present', async function() {
     try {
-      let mogront = new Mogront(Database, testOptions);
-      return done();
+      let connection = await Database.getConnection(testOptions);
+      let mogront = new Mogront(connection, testOptions);
+      return Promise.resolve();
     } catch (error) {
-      return done(error);
+      return Promise.reject(error);
     }
   });
 
   it('should create a migration file with the specified name', function(done) {
     try {
-      let mogront = new Mogront(Database, testOptions);
+      let mogront = new Mogront(null, testOptions);
 
       mogront.create('create test collection').then(function(fileName) {
         if ((fileName.indexOf('create') > -1) && (fileName.indexOf('test') > -1) && (fileName.indexOf('collection') > -1)) {
@@ -79,7 +82,7 @@ describe('mogront', function() {
       if (fs.existsSync(migrationsDirPath)) {
         throw new Error('Unable to delete the migrations directory');
       } else {
-        let mogront = new Mogront(Database, testOptions); // Recreates the migrations directory
+        let mogront = new Mogront(null, testOptions); // Recreates the migrations directory
 
         if (fs.existsSync(migrationsDirPath)) {
           return done();
@@ -94,7 +97,7 @@ describe('mogront', function() {
 
   it('should copy the test_migrations/create_test_user.js file into the migrations directory', function(done) {
     try {
-      let mogront = new Mogront(Database, testOptions);
+      let mogront = new Mogront(null, testOptions);
 
       // Copy the file over into the migrations directory
       let fileName = 'create_test_user.js';
@@ -121,7 +124,7 @@ describe('mogront', function() {
 
   it('should execute the test_migrations/create_test_user.js file in the migrations directory', function(done) {
     try {
-      let mogront = new Mogront(Database, testOptions);
+      let mogront = new Mogront(null, testOptions);
 
       let fileName = 'create_test_user.js';
 
@@ -141,7 +144,7 @@ describe('mogront', function() {
 
   it('should copy the test_migrations/create_test_profile.js file into the migrations directory', function(done) {
     try {
-      let mogront = new Mogront(Database, testOptions);
+      let mogront = new Mogront(null, testOptions);
 
       // Copy the file over into the migrations directory
       let fileName = 'create_test_profile.js';
@@ -168,7 +171,7 @@ describe('mogront', function() {
 
   it('should execute the test_migrations/create_test_profile.js file in the migrations directory', function(done) {
     try {
-      let mogront = new Mogront(Database, testOptions);
+      let mogront = new Mogront(null, testOptions);
 
       let fileName = 'create_test_profile.js';
 

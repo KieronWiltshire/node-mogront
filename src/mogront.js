@@ -3,10 +3,10 @@
 import _ from 'lodash';
 import fs from 'fs';
 import path from 'path';
-import Monk from 'monk';
 import ChangeCase from 'change-case';
 import {default as createDebugger} from 'debug';
 import CombineErrors from 'combine-errors';
+import * as Database from './database';
 
 const debug = createDebugger('mogront');
 
@@ -18,39 +18,52 @@ export default class Mogront {
   /**
    * Create a new {Mogront} instance.
    */
-  constructor(monk, {
-    collectionName = 'mogront', // The name of the collection that will store migration state
-    migrationsDir = './migrations' // Relative path to the migrations directory
+  constructor(mongo, {
+    collectionName = '_migrations', // The name of the collection that will store migration state
+    migrationsDir = './migrations', // Relative path to the migrations directory
+    url,
+    user,
+    password,
+    host = '127.0.0.1',
+    port = 27017,
+    db
   } = {}) {
-    collectionName = collectionName.toString();
-    migrationsDir = path.join(process.cwd(), migrationsDir);
+    if (((url && (typeof url === 'string')) || ((host && (typeof host === 'string')) && (port && (typeof port === 'string' || typeof port === 'number')))) && (db && (typeof db === 'string'))) {
+      collectionName = collectionName.toString();
+      migrationsDir = path.join(process.cwd(), migrationsDir);
 
-    if (!(monk instanceof Monk)) {
-      throw new Exception('The first argument needs to be an instance of {Monk}.')
+      if (!(mongo instanceof Database.MongoClient)) {
+        mongo = Database.getConnection({ url, user, password, host, port, db });
+      }
+
+      if (collectionName.length <= 0 && !(/^(?![0-9]*$)[a-zA-Z0-9]+$/.test(collectionName))) {
+        throw new Error('The specified collection name cannot conform to mongodb\'s specifications')
+      }
+
+      if (!fs.existsSync(migrationsDir)) {
+        fs.mkdirSync(migrationsDir);
+      }
+
+      this._db = db;
+      this._mongo = mongo;
+      this._collectionName = collectionName;
+      this._migrationsDir = migrationsDir;
+    } else {
+      throw new Error('Option parameters are missing or invalid');
     }
-
-    if (collectionName.length <= 0 && !(/^(?![0-9]*$)[a-zA-Z0-9]+$/.test(collectionName))) {
-      throw new Exception('The specified collection name cannot conform to mongodb\'s specifications')
-    }
-
-    if (!fs.existsSync(migrationsDir)) {
-      fs.mkdirSync(migrationsDir);
-    }
-
-    this._monk = monk;
-    this._collectionName = collectionName;
-    this._migrationsDir = migrationsDir;
-
-    this._collection = monk.create(collectionName);
   }
 
   /**
-   * Retrieve the {Monk} instance.
+   * Retrieve the {MongoClient} instance.
    *
-   * @returns {Monk}
+   * @returns {MongoClient}
    */
-  monk() {
-    return this._monk;
+  async mongo() {
+    if (this._mongo instanceof Promise) {
+      this._mongo = await this._mongo;
+    }
+
+    return this._mongo;
   }
 
   /**
@@ -102,7 +115,7 @@ export default class Mogront {
       if (fs.existsSync(filePath)) {
         return reject(new Error('The file to generate seems to have already been created, [' + filePath + ']'));
       } else {
-        let stream = fs.createReadStream(path.resolve(__dirname, 'templates', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
+        let stream = fs.createReadStream(path.resolve(__dirname, 'stubs', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
 
         stream.on('error', reject);
         stream.on('close', function () {
@@ -112,14 +125,28 @@ export default class Mogront {
     });
   }
 
+  async _collectionExist(collectionName) {
+    let connection = await Database.getConnection();
+
+    let db = connection.db(this._db);
+    let collections = await db.listCollections().toArray();
+
+    return (collections.indexOf(collectionName) > -1);
+  }
+
   /**
    * Retrieve the status of each migration.
    *
    * @returns {Promise<Array>} The state of each migration
    */
   async state() {
-    let collection = await this._monk.create(this._collectionName);
-    let state = await collection.find({}, { sort: { executedOn: -1 } });
+    let connection = await Database.getConnection();
+
+    let db = connection.db(this._db);
+    let exists = await this._collectionExist(this._collectionName);
+    let collection = (exists ? db.collection(this._collectionName) : await db.createCollection(this._collectionName));
+
+    let state = await collection.find({}, { sort: { executedOn: -1 } }).toArray();
     let migrations = fs.readdirSync(this._migrationsDir);
 
     for (let i = 0; i < migrations.length; i++) {
@@ -150,7 +177,12 @@ export default class Mogront {
    * @returns {Promise<Array>} All of the migrations that were executed
    */
   async migrate() {
-    let collection = await this._monk.create(this._collectionName);
+    let connection = await Database.getConnection();
+
+    let db = connection.db(this._db);
+    let exists = await this._collectionExist(this._collectionName);
+    let collection = (exists ? db.collection(this._collectionName) : await db.createCollection(this._collectionName));
+
     let migrations = fs.readdirSync(this._migrationsDir);
     let state = await this.state();
     let pending = [];
@@ -174,7 +206,7 @@ export default class Mogront {
       let migration = require(path.join(this.getMigrationsDirectory(), pending[i]));
 
       try {
-        let result = migration.up(this._monk);
+        let result = migration.up(connection, this._db);
 
         if (result instanceof Promise) {
           result = await result;
@@ -196,7 +228,7 @@ export default class Mogront {
       }
     }
 
-    await collection.insert(success);
+    await collection.insertMany(success);
 
     return success;
   }
@@ -208,7 +240,12 @@ export default class Mogront {
    * @returns {Promise<Array>} All of the migrations that were rolled back
    */
   async rollback(all) {
-    let collection = await this._monk.create(this._collectionName);
+    let connection = await Database.getConnection();
+
+    let db = connection.db(this._db);
+    let exists = await this._collectionExist(this._collectionName);
+    let collection = (exists ? db.collection(this._collectionName) : await db.createCollection(this._collectionName));
+
     let migrations = fs.readdirSync(this._migrationsDir);
     let state = await this.state();
     let rolledback = [];
@@ -239,7 +276,7 @@ export default class Mogront {
           let migration = require(path.join(this.getMigrationsDirectory(), migrations[i]));
 
           try {
-            let result = migration.down(this._monk);
+            let result = migration.down(connection, this._db);
 
             if (result instanceof Promise) {
               result = await result;

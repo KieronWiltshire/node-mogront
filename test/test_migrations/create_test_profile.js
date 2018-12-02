@@ -3,20 +3,35 @@
 /**
  * The 'up' method is called on migration.
  *
- * @param {Monk} monk The monk database instance
+ * @param {MongoDB.MongoClient} connection The MongoClient instance
+ * @param {String} dbName The name of the database
  * @returns {Promise}
  */
-module.exports.up = function(monk) {
-  let collection = monk.get('profiles');
-  return collection.insert({ hello: 'world' });
+module.exports.up = function(connection, dbName) {
+  return new Promise(function(resolve, reject) {
+    let db = connection.db(dbName)
+    let collection = db.collection('profiles');
+
+    collection.insert({ hello: 'world' })
+      .then(resolve)
+      .catch(reject);
+  });
 };
 
 /**
  * The 'down' method is called on rollback.
  *
- * @param {Monk} monk The monk database instance
+ * @param {MongoDB.MongoClient} connection The MongoClient instance
+ * @param {String} dbName The name of the database
  * @returns {Promise}
  */
-module.exports.down = function(monk) {
-  return monk.get('profiles').remove({});
+module.exports.down = function(connection, dbName) {
+  return new Promise(function(resolve, reject) {
+    let db = connection.db(dbName)
+    let collection = db.collection('profiles');
+
+    collection.remove({ hello: 'world' })
+      .then(resolve)
+      .catch(reject);
+  });
 };

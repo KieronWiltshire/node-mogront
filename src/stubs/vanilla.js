@@ -8,14 +8,7 @@
  * @returns {Promise}
  */
 module.exports.up = function(connection, dbName) {
-  return new Promise(function(resolve, reject) {
-    let db = connection.db(dbName)
-    let collection = db.collection('users');
 
-    collection.insert({ hello: 'world' })
-    .then(resolve)
-    .catch(reject);
-  });
 };
 
 /**
@@ -26,12 +19,5 @@ module.exports.up = function(connection, dbName) {
  * @returns {Promise}
  */
 module.exports.down = function(connection, dbName) {
-  return new Promise(function(resolve, reject) {
-    let db = connection.db(dbName)
-    let collection = db.collection('users');
 
-    collection.remove({ hello: 'world' })
-      .then(resolve)
-      .catch(reject);
-  });
 };
