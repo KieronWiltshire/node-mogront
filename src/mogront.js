@@ -126,7 +126,7 @@ export default class Mogront {
   }
 
   async _collectionExist(collectionName) {
-    let connection = await Database.getConnection();
+    let connection = await this.mongo();
 
     let db = connection.db(this._db);
     let collections = await db.listCollections().toArray();
@@ -140,7 +140,7 @@ export default class Mogront {
    * @returns {Promise<Array>} The state of each migration
    */
   async state() {
-    let connection = await Database.getConnection();
+    let connection = await this.mongo();
 
     let db = connection.db(this._db);
     let exists = await this._collectionExist(this._collectionName);
@@ -177,7 +177,7 @@ export default class Mogront {
    * @returns {Promise<Array>} All of the migrations that were executed
    */
   async migrate() {
-    let connection = await Database.getConnection();
+    let connection = await this.mongo();
 
     let db = connection.db(this._db);
     let exists = await this._collectionExist(this._collectionName);
@@ -240,7 +240,7 @@ export default class Mogront {
    * @returns {Promise<Array>} All of the migrations that were rolled back
    */
   async rollback(all) {
-    let connection = await Database.getConnection();
+    let connection = await this.mongo();
 
     let db = connection.db(this._db);
     let exists = await this._collectionExist(this._collectionName);
