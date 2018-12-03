@@ -30,6 +30,7 @@ export default class Mogront {
   } = {}) {
     if (((url && (typeof url === 'string')) || ((host && (typeof host === 'string')) && (port && (typeof port === 'string' || typeof port === 'number')))) && (db && (typeof db === 'string'))) {
       this._connectedInternally = false;
+      this._disposed = false;
 
       collectionName = collectionName.toString();
       migrationsDir = path.join(process.cwd(), migrationsDir);
@@ -75,12 +76,31 @@ export default class Mogront {
    * @returns {void}
    */
   async dispose() {
-    if (this._connectedInternally) {
-      return await Database.dispose();
-    } else {
-      let connection = await this.mongo();
-      return connection.close();
+    let result = null;
+
+    try {
+      if (this._connectedInternally) {
+        result = await Database.dispose();
+      } else {
+        let connection = await this.mongo();
+        result = await connection.close();
+      }
+
+      this._disposed = true;
+
+      return result;
+    } catch (error) {
+      throw error;
     }
+  }
+
+  /**
+   * Check if the connection has been disposed.
+   *
+   * @return {boolean}
+   */
+  isDisposed() {
+    return this._disposed;
   }
 
   /**
