@@ -29,11 +29,14 @@ export default class Mogront {
     db
   } = {}) {
     if (((url && (typeof url === 'string')) || ((host && (typeof host === 'string')) && (port && (typeof port === 'string' || typeof port === 'number')))) && (db && (typeof db === 'string'))) {
+      this._connectedInternally = false;
+
       collectionName = collectionName.toString();
       migrationsDir = path.join(process.cwd(), migrationsDir);
 
       if (!(mongo instanceof Database.MongoClient)) {
         mongo = Database.getConnection({ url, user, password, host, port, db });
+        this._connectedInternally = true;
       }
 
       if (collectionName.length <= 0 && !(/^(?![0-9]*$)[a-zA-Z0-9]+$/.test(collectionName))) {
@@ -64,6 +67,20 @@ export default class Mogront {
     }
 
     return this._mongo;
+  }
+
+  /**
+   * Dispose of the {MongoClient} instance.
+   *
+   * @returns {void}
+   */
+  async dispose() {
+    if (this._connectedInternally) {
+      return await Database.dispose();
+    } else {
+      let connection = await this.mongo();
+      return connection.close();
+    }
   }
 
   /**

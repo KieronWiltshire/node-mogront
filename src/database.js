@@ -58,6 +58,21 @@ export const getConnection = async function({ url, user, password, host, port, d
 };
 
 /**
+ * Export dispose
+ */
+export const dispose = async function() {
+  if (connection) {
+    let result = await connection.close();
+
+    connection = null;
+
+    return result;
+  }
+
+  return true;
+};
+
+/**
  * Export connection
  */
 export default getConnection;
