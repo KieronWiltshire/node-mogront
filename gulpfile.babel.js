@@ -27,5 +27,7 @@ Gulp.task('transpile', ['clean'], function() {
  * Clean the environment
  */
 Gulp.task('clean', function() {
+  Fsx.removeSync(Path.join(__dirname, '/test/migrations'));
+  Fsx.removeSync(Path.join(__dirname, '/migrations'));
   Fsx.removeSync(distDir);
 });
