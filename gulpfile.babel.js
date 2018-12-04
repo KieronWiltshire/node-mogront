@@ -16,11 +16,17 @@ Gulp.task('build', ['transpile']);
  * Transpile the application
  */
 Gulp.task('transpile', ['clean'], function() {
-  return Gulp.src([
-      'src/**/*'
+  Gulp.src([
+      'src/**',
+      '!src/stubs/**',
     ])
     .pipe(Babel())
     .pipe(Gulp.dest(distDir));
+
+  Gulp.src([
+      'src/stubs/*.js'
+    ])
+    .pipe(Gulp.dest(Path.join(distDir, 'stubs')));
 });
 
 /**
