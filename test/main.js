@@ -11,15 +11,13 @@ import CombineErrors from 'combine-errors';
 
 let testOptions = Object.assign({
   collectionName: 'migrations',
-  migrationsDir: path.join('./test/migrations')
+  migrationsDir: path.join(process.cwd(), './test/migrations')
 }, DatabaseConfig);
 
 describe('mogront', function() {
 
   before(function(done) {
     this.timeout(10000);
-
-    let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
 
     let mogront = new Mogront(null, testOptions);
 
@@ -29,8 +27,8 @@ describe('mogront', function() {
     }).then(function() {
       return mogront.dispose();
     }).then(function() {
-      if (fs.existsSync(migrationsDirPath)) {
-        return fs.remove(migrationsDirPath, done);
+      if (fs.existsSync(testOptions.migrationsDir)) {
+        return fs.remove(testOptions.migrationsDir, done);
       } else {
         return done();
       }
@@ -89,19 +87,16 @@ describe('mogront', function() {
 
   it('should delete the migrations directory and then recreate it so that it clears out the previous migration', function(done) {
     try {
-      // Clear the directory to prevent an empty migration from running and giving an error
-      let migrationsDirPath = path.join(process.cwd(), testOptions.migrationsDir);
-
-      if (fs.existsSync(migrationsDirPath)) {
-        fs.removeSync(migrationsDirPath);
+      if (fs.existsSync(testOptions.migrationsDir)) {
+        fs.removeSync(testOptions.migrationsDir);
       }
 
-      if (fs.existsSync(migrationsDirPath)) {
+      if (fs.existsSync(testOptions.migrationsDir)) {
         throw new Error('Unable to delete the migrations directory');
       } else {
         let mogront = new Mogront(null, testOptions); // Recreates the migrations directory
 
-        if (fs.existsSync(migrationsDirPath)) {
+        if (fs.existsSync(testOptions.migrationsDir)) {
           return done();
         } else {
           throw new Error('Unable to recreate the migrations directory');
@@ -119,7 +114,7 @@ describe('mogront', function() {
       // Copy the file over into the migrations directory
       let fileName = 'create_test_user.js';
       let currentFilePath = path.resolve(__dirname, 'test_migrations', fileName);
-      let newFilePath = path.join(process.cwd(), testOptions.migrationsDir, fileName);
+      let newFilePath = path.join(testOptions.migrationsDir, fileName);
 
       /**
        * Create the file.
@@ -210,7 +205,7 @@ describe('mogront', function() {
       // Copy the file over into the migrations directory
       let fileName = 'create_test_profile.js';
       let currentFilePath = path.resolve(__dirname, 'test_migrations', fileName);
-      let newFilePath = path.join(process.cwd(), testOptions.migrationsDir, fileName);
+      let newFilePath = path.join(testOptions.migrationsDir, fileName);
 
       /**
        * Create the file.
