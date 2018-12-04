@@ -12,7 +12,7 @@ module.exports.up = function(connection, dbName) {
     let db = connection.db(dbName)
     let collection = db.collection('users');
 
-    collection.insert({ hello: 'world' })
+    collection.insertOne({ hello: 'world' })
     .then(resolve)
     .catch(reject);
   });
@@ -30,7 +30,7 @@ module.exports.down = function(connection, dbName) {
     let db = connection.db(dbName)
     let collection = db.collection('users');
 
-    collection.remove({ hello: 'world' })
+    collection.deleteOne({ hello: 'world' })
       .then(resolve)
       .catch(reject);
   });

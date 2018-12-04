@@ -340,7 +340,7 @@ export default class Mogront {
     }
 
     for (let i = 0; i < rolledback.length; i++) {
-      await collection.remove({ name: rolledback[i].name });
+      await collection.deleteMany({ name: rolledback[i].name });
     }
 
     return rolledback;
