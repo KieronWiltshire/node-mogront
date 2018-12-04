@@ -145,7 +145,7 @@ export default class Mogront {
       let creationMinute = ('0' + creationTimestamp.getMinutes()).slice(-2);
       let creationSecond = ('0' + creationTimestamp.getSeconds()).slice(-2);
 
-      let fileName = creationYear + '_' + creationMonth + '_' + creationDate + '_' + creationHour + '_' + creationMinute + '_' + creationSecond + '_' + name;
+      let fileName = creationYear + '_' + creationMonth + '_' + creationDate + '_' + creationHour + creationMinute + creationSecond + '_' + name;
       let fileExtension = '.js';
       let filePath = path.join(self._migrationsDir, fileName + fileExtension);
 
@@ -243,7 +243,7 @@ export default class Mogront {
       let migration = require(path.join(this.getMigrationsDirectory(), pending[i]));
 
       try {
-        let result = migration.up(connection, this._db);
+        let result = await migration.up(connection, this._db);
 
         if (result instanceof Promise) {
           result = await result;
@@ -265,7 +265,9 @@ export default class Mogront {
       }
     }
 
-    await collection.insertMany(success);
+    if (success.length > 0) {
+      await collection.insertMany(success);
+    }
 
     return success;
   }
@@ -287,13 +289,13 @@ export default class Mogront {
     let state = await this.state();
     let rolledback = [];
 
-    if (state.length > 0) {
-      state = state.filter((k) => {
-        if (k.status === 'EXECUTED') {
-          return k;
-        }
-      });
+    state = state.filter((k) => {
+      if (k.status === 'EXECUTED') {
+        return k;
+      }
+    });
 
+    if (state.length > 0) {
       if (!all) {
         let lastBatchExecutedOn = state[0].executedOn;
 
@@ -313,7 +315,7 @@ export default class Mogront {
           let migration = require(path.join(this.getMigrationsDirectory(), migrations[i]));
 
           try {
-            let result = migration.down(connection, this._db);
+            let result = await migration.down(connection, this._db);
 
             if (result instanceof Promise) {
               result = await result;

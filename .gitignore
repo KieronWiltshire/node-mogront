@@ -3,3 +3,4 @@
 npm-debug.log
 /test/config.json
 /test/migrations
+/migrations
