@@ -1,6 +1,6 @@
 {
   "name": "mogront",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A tool to handle mongodb migrations from the cli and nodejs",
   "main": "./build/mogront.js",
   "files": [
@@ -9,7 +9,7 @@
     "test"
   ],
   "bin": {
-    "mogront": "./build/bin/cli"
+    "mogront": "./build/bin/cli.js"
   },
   "scripts": {
     "build": "gulp build",
