@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import fs from 'fs-extra';
+import fs from 'fs';
 import path from 'path';
 import program from 'commander';
 import Mogront from '../mogront';
