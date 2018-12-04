@@ -33,7 +33,6 @@ export default class Mogront {
       this._disposed = false;
 
       collectionName = collectionName.toString();
-      migrationsDir = path.join(process.cwd(), migrationsDir);
 
       if (!(mongo instanceof Database.MongoClient)) {
         mongo = Database.getConnection({ url, user, password, host, port, db });
