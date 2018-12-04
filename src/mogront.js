@@ -239,7 +239,13 @@ export default class Mogront {
     }
 
     for (let i = 0; i < pending.length; i++) {
-      let migration = require(path.join(this.getMigrationsDirectory(), pending[i]));
+      let migrationPath = path.join(this.getMigrationsDirectory(), pending[i]);
+      let migration = null;
+      try {
+        migration = require(migrationPath);
+      } catch (error) {
+        throw new Error('Unable to find the migration at the specified path [' + migrationPath + ']');
+      }
 
       try {
         let result = await migration.up(connection, this._db);
@@ -311,7 +317,13 @@ export default class Mogront {
 
       for (let n = 0; n < state.length; n++) {
         if (state[n].name === migrationName) {
-          let migration = require(path.join(this.getMigrationsDirectory(), migrations[i]));
+          let migrationPath = path.join(this.getMigrationsDirectory(), migrations[i]);
+          let migration = null;
+          try {
+            migration = require(migrationPath);
+          } catch (error) {
+            throw new Error('Unable to find the migration at the specified path [' + migrationPath + ']');
+          }
 
           try {
             let result = await migration.down(connection, this._db);
