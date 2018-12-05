@@ -20,7 +20,7 @@ export default class Mogront {
    */
   constructor(mongo, {
     collectionName = '_migrations', // The name of the collection that will store migration state
-    migrationsDir = './migrations', // Relative path to the migrations directory
+    migrationsDir = (path.join(process.cwd(), 'migrations')), // Relative path to the migrations directory
     url,
     user,
     password,
@@ -244,7 +244,10 @@ export default class Mogront {
       try {
         migration = require(migrationPath);
       } catch (error) {
-        throw new Error('Unable to find the migration at the specified path [' + migrationPath + ']');
+        throw new CombineErrors([
+          Error('Unable to find the migration at the specified path [' + migrationPath + ']'),
+          error
+        ]);
       }
 
       try {
