@@ -31,16 +31,16 @@ const invoke = function(env) {
   Commander
     .version('1.0.0', '-v, --version')
     .option('-c, --config <path>', 'specify the configuration file to load')
+    .option("-t, --template <stub>", "specify the template to create the migration file from", /^(vanilla|es6)$/i, 'vanilla')
     .action(console.log);
 
   Commander
     .command('create <name>')
     .description('create a migration file')
-    .option("-t, --template <stub>", "specify the template to create the migration file from", /^(vanilla|es6)$/i, 'vanilla')
     .action(function(name){
       let config = getConfig(Commander.args[1].parent.config);
       let options = {
-        template: Commander.args[1].template
+        template: Commander.args[1].parent.template
       };
 
       let mogront = new Mogront(null, config);
