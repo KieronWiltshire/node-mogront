@@ -11,9 +11,6 @@ The package exports methods that can be used to handle mongodb migrations using 
 ## Basic usage
 
 # TODO
-- finish off some commands such as migrate "nothing to migrate" (Same with rollback)
-- display the help if no command is specified
-- write the actual readme
 
 ## Contributing
 

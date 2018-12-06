@@ -251,7 +251,7 @@ export default class Mogront {
       }
 
       try {
-        let result = await migration.up(connection, this._db);
+        let result = await migration.up(db);
 
         if (result instanceof Promise) {
           result = await result;
@@ -329,7 +329,7 @@ export default class Mogront {
           }
 
           try {
-            let result = await migration.down(connection, this._db);
+            let result = await migration.down(db);
 
             if (result instanceof Promise) {
               result = await result;

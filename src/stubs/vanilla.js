@@ -3,21 +3,19 @@
 /**
  * The 'up' method is called on migration.
  *
- * @param {MongoDB.MongoClient} connection The MongoClient instance
- * @param {String} dbName The name of the database
+ * @param {Database} database The MongoClient database instance
  * @returns {Promise}
  */
-module.exports.up = function(connection, dbName) {
+module.exports.up = function(database) {
 
 };
 
 /**
  * The 'down' method is called on rollback.
  *
- * @param {MongoDB.MongoClient} connection The MongoClient instance
- * @param {String} dbName The name of the database
+ * @param {Database} database The MongoClient database instance
  * @returns {Promise}
  */
-module.exports.down = function(connection, dbName) {
+module.exports.down = function(database) {
 
 };

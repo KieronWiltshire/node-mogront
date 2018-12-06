@@ -63,24 +63,28 @@ const invoke = function(env) {
       let mogront = new Mogront(null, config);
 
       mogront.state().then((state) => {
-        state.forEach((k) => {
-          if (program.args[0].pending && !program.args[0].executed) {
-            if (k.status === 'PENDING') {
-              console.log(k.name.yellow + ' is currently ' + k.status.gray);
+        if (state.length > 0) {
+          state.forEach((k) => {
+            if (program.args[0].pending && !program.args[0].executed) {
+              if (k.status === 'PENDING') {
+                console.log(k.name.yellow + ' is currently ' + k.status.gray);
+              }
+            } else if (program.args[0].executed && !program.args[0].pending) {
+              if (k.status === 'EXECUTED') {
+                console.log(k.name.yellow + ' has been ' + k.status.gray);
+              }
+            } else {
+              if (k.status === 'PENDING') {
+                console.log(k.name.yellow + ' is currently ' + k.status.gray);
+              }
+              if (k.status === 'EXECUTED') {
+                console.log(k.name.yellow + ' has been ' + k.status.gray);
+              }
             }
-          } else if (program.args[0].executed && !program.args[0].pending) {
-            if (k.status === 'EXECUTED') {
-              console.log(k.name.yellow + ' has been ' + k.status.gray);
-            }
-          } else {
-            if (k.status === 'PENDING') {
-              console.log(k.name.yellow + ' is currently ' + k.status.gray);
-            }
-            if (k.status === 'EXECUTED') {
-              console.log(k.name.yellow + ' has been ' + k.status.gray);
-            }
-          }
-        });
+          });
+        } else {
+          console.log('No migrations found.'.red);
+        }
         return mogront.dispose();
       }).then(() => {
         process.exit(0);
@@ -95,9 +99,13 @@ const invoke = function(env) {
       let mogront = new Mogront(null, config);
 
       mogront.migrate().then((state) => {
-        state.forEach((k) => {
-          console.log(k.name.green + ' has been migrated successfully.');
-        });
+        if (state.length > 0) {
+          state.forEach((k) => {
+            console.log(k.name.green + ' has been migrated successfully.');
+          });
+        } else {
+          console.log('Nothing new to migrate.'.green);
+        }
         return mogront.dispose();
       }).then(() => {
         process.exit(0);
@@ -113,9 +121,13 @@ const invoke = function(env) {
       let mogront = new Mogront(null, config);
 
       mogront.rollback(Commander.args[0].all).then((state) => {
-        state.forEach((k) => {
-          console.log(k.name.green + ' has been rolled back successfully.');
-        });
+        if (state.length > 0) {
+          state.forEach((k) => {
+            console.log(k.name.green + ' has been rolled back successfully.');
+          });
+        } else {
+          console.log('Nothing to rollback'.green);
+        }
         return mogront.dispose();
       }).then(() => {
         process.exit(0);
@@ -123,6 +135,10 @@ const invoke = function(env) {
     });
 
   Commander.parse(process.argv);
+
+  if (Commander.args.length <= 0) {
+    Commander.help();
+  }
 }
 
 const cli = new LiftOff({

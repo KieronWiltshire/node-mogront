@@ -17,7 +17,7 @@ export const getConnection = async function({ url, user, password, host, port, d
   if (!connection) {
     try {
       if (url) {
-        connection = await MongoClient.connect(url);
+        connection = await MongoClient.connect(url, { useNewUrlParser: true });
       } else {
         let connectionURL = null;
 
@@ -43,7 +43,7 @@ export const getConnection = async function({ url, user, password, host, port, d
           connectionURL += '/' + db;
         }
 
-        connection = await MongoClient.connect('mongodb://' + connectionURL);
+        connection = await MongoClient.connect('mongodb://' + connectionURL, { useNewUrlParser: true });
       }
     } catch (error) {
       console.error(error);
