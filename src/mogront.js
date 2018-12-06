@@ -185,6 +185,21 @@ export default class Mogront {
     let state = await collection.find({}, { sort: { executedOn: -1 } }).toArray();
     let migrations = fs.readdirSync(this._migrationsDir);
 
+    for (let i = 0; i < state.length; i++) {
+      let isFound = false;
+
+      for (let n = 0; n  < migrations.length; n++) {
+        let migrationName = path.parse(migrations[n]).name;
+        if (state[i].name === migrationName) {
+          isFound = true;
+        }
+      }
+
+      if (!isFound) {
+        throw new Error('Migration: ' + state[i] + ' has lost it\'s file.');
+      }
+    }
+
     for (let i = 0; i < migrations.length; i++) {
       let migrationName = path.parse(migrations[i]).name;
       let isPending = true;

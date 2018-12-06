@@ -67,6 +67,8 @@ describe('mogront', function() {
     }
   });
 
+  let newMigrationFile = null;
+
   it('should create a migration file with the specified name', function(done) {
     try {
       let mogront = new Mogront(null, testOptions);
@@ -74,12 +76,88 @@ describe('mogront', function() {
       mogront.create('create test collection').then(function(fileName) {
         if ((fileName.indexOf('create') > -1) && (fileName.indexOf('test') > -1) && (fileName.indexOf('collection') > -1)) {
           if (fs.existsSync(path.join(mogront.getMigrationsDirectory(), fileName))) {
+            newMigrationFile = path.parse(path.join(mogront.getMigrationsDirectory(), fileName));
             return done();
           }
         }
 
         throw new Error('Unable to find the migration file');
       }).catch(done);
+    } catch (error) {
+      return done(error);
+    }
+  });
+
+  it('should verify the state of the newly created migration', function(done) {
+    try {
+      let mogront = new Mogront(null, testOptions);
+
+      mogront.state().then(function(state) {
+        Chai.expect(state).to.be.an('array');
+        Chai.expect(state).to.have.lengthOf(1);
+        Chai.expect(_.some(state, { name: newMigrationFile.name, status: 'PENDING' })).to.be.true;
+
+        return done();
+      }).catch(done);
+    } catch (error) {
+      return done(error);
+    }
+  });
+
+  it('should execute the newly created migration', function(done) {
+    try {
+      let mogront = new Mogront(null, testOptions);
+
+      mogront.migrate().then(function(state) {
+        Chai.expect(state).to.be.an('array');
+        Chai.expect(state).to.have.lengthOf(1);
+        Chai.expect(state[0]).to.have.property('name');
+        Chai.expect(state[0].name).to.equal(newMigrationFile.name);
+        Chai.expect(state[0].status).to.equal('EXECUTED');
+
+        return done();
+      }).catch(done);
+    } catch (error) {
+      return done(error);
+    }
+  });
+
+  it('should not be able to find the file once it\'s been deleted', function(done) {
+    try {
+      let mogront = new Mogront(null, testOptions);
+
+      let migrationFilePath = path.join(mogront.getMigrationsDirectory(), newMigrationFile.name + newMigrationFile.ext);
+
+      if (fs.existsSync(migrationFilePath)) {
+        fs.removeSync(migrationFilePath);
+      }
+
+      mogront.state().then(function(state) {
+        return done(new Error('The state returned without error'));
+      }).catch((error) => {
+        return done();
+      });
+    } catch (error) {
+      return done(error);
+    }
+  });
+
+  it('should re-add the deleted migration, and rollback', function(done) {
+    try {
+      let mogront = new Mogront(null, testOptions);
+
+      let migrationFilePath = path.join(mogront.getMigrationsDirectory(), newMigrationFile.name + newMigrationFile.ext);
+
+      if (fs.existsSync(migrationFilePath)) {
+        throw new Error('The migration file still exists');
+      } else {
+        let stream = fs.createReadStream(path.resolve(__dirname, '..', 'src', 'stubs', 'es6.js')).pipe(fs.createWriteStream(migrationFilePath));
+
+        stream.on('error', done);
+        stream.on('close', function () {
+          mogront.rollback().then(() => {done()}).catch(done);
+        });
+      }
     } catch (error) {
       return done(error);
     }
@@ -134,7 +212,7 @@ describe('mogront', function() {
     }
   });
 
-  it('should verify the state of the migration "create_test_user" migratrion before copying over the "create_test_profile"', function(done) {
+  it('should verify the state of the migration "create_test_user" migration before copying over the "create_test_profile"', function(done) {
     try {
       let mogront = new Mogront(null, testOptions);
 
@@ -166,7 +244,7 @@ describe('mogront', function() {
           Chai.expect(state[0].name).to.equal('create_test_user');
           Chai.expect(state[0].status).to.equal('EXECUTED');
 
-          done();
+          return done();
         }).catch(done);
       } else {
         return done(new Error('The test_migration.js file was not found in the new file path'));
@@ -191,7 +269,7 @@ describe('mogront', function() {
         Chai.expect(result).to.have.property('_id');
         Chai.expect(result.hello).to.equal('world');
 
-        done();
+        return done();
       }).catch(done);
     } catch (error) {
       return done(error);
@@ -401,7 +479,7 @@ describe('mogront', function() {
         return userCollection.findOne({ hello: 'world' });
       }).then(function(result) {
         Chai.expect(result).to.be.a('null');
-        done();
+        return done();
       }).catch(done);
     } catch (error) {
       return done(error);
