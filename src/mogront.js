@@ -28,7 +28,7 @@ export default class Mogront {
     port = 27017,
     db
   } = {}) {
-    if (((url && (typeof url === 'string')) || ((host && (typeof host === 'string')) && (port && (typeof port === 'string' || typeof port === 'number')))) && (db && (typeof db === 'string'))) {
+    if ((((url && (typeof url === 'string')) || ((host && (typeof host === 'string')) && (port && (typeof port === 'string' || typeof port === 'number')))) && (db && (typeof db === 'string'))) || (mongo)) {
       this._connectedInternally = false;
       this._disposed = false;
 
