@@ -238,7 +238,7 @@ export default class Mogront {
     let state = await this.state();
     let pending = [];
     let success = [];
-    let executedOn = new Date().getTime();
+    let executedOn = new Date();
 
     for (let i = 0; i < migrations.length; i++) {
       let migrationName = path.parse(migrations[i]).name;
