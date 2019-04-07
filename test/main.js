@@ -15,8 +15,14 @@ let testOptions = Object.assign({
   seedersDir: path.join(process.cwd(), './test/seeders')
 }, DatabaseConfig);
 
+/**
+ *
+ */
 describe('mogront', () => {
 
+  /**
+   * Setup
+   */
   before(function(done) {
     this.timeout(10000);
 
@@ -43,6 +49,9 @@ describe('mogront', () => {
     });
   });
 
+  /**
+   * Instance tests
+   */
   describe('instance', () => {
     it('should create a new {Mogront} instance without an instance of {MongoDB.MongoClient} present', function(done) {
       try {
@@ -70,7 +79,10 @@ describe('mogront', () => {
     });
   });
 
-  describe('migrations', () => {
+  /**
+   * Migrator tests
+   */
+  describe('migrator', () => {
     let newMigrationFile = null;
 
     it('should create a migration file with the specified name', function(done) {
@@ -506,6 +518,13 @@ describe('mogront', () => {
         return done(error);
       }
     });
+  });
+
+  /**
+   * Seeder tests
+   */
+  describe('seeder', () => {
+
   });
 
 });
