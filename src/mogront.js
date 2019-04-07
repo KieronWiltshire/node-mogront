@@ -21,6 +21,7 @@ export default class Mogront {
   constructor(mongo, {
     collectionName = '_migrations', // The name of the collection that will store migration state
     migrationsDir = (path.join(process.cwd(), 'migrations')), // Relative path to the migrations directory
+    seedersDir = (path.join(process.cwd(), 'seeders')), // Relative path to the seeders directory
     url,
     user,
     password,
@@ -47,10 +48,15 @@ export default class Mogront {
         fs.mkdirSync(migrationsDir);
       }
 
+      if (!fs.existsSync(seedersDir)) {
+        fs.mkdirSync(seedersDir);
+      }
+
       this._db = db;
       this._mongo = mongo;
       this._collectionName = collectionName;
       this._migrationsDir = migrationsDir;
+      this._seedersDir = seedersDir;
     } else {
       throw new Error('Option parameters are missing or invalid');
     }
@@ -112,19 +118,28 @@ export default class Mogront {
   }
 
   /**
+   * Retrieve the path to the seeder directory.
+   *
+   * @returns {string}
+   */
+  getSeedersDirectory() {
+    return this._seedersDir;
+  }
+
+  /**
    * Create a migration.
    *
    * @param {string} name The name of the migration
    * @returns {boolean} true if the migration file was created successfully
    */
-  async create(name, {
+  async createMigration(name, {
     template = 'vanilla'
   } = {}) {
     let self = this;
 
     return new Promise(function(resolve, reject) {
       template = template.toLowerCase();
-      name = ChangeCase.snakeCase(name.toLowerCase());
+      name = ChangeCase.snakeCase(name);
 
       let templateFileExtension = '';
 
@@ -151,7 +166,49 @@ export default class Mogront {
       if (fs.existsSync(filePath)) {
         return reject(new Error('The file to generate seems to have already been created, [' + filePath + ']'));
       } else {
-        let stream = fs.createReadStream(path.resolve(__dirname, 'stubs', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
+        let stream = fs.createReadStream(path.resolve(__dirname, 'stubs', 'migrations', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
+
+        stream.on('error', reject);
+        stream.on('close', function () {
+          return resolve(fileName + fileExtension);
+        });
+      }
+    });
+  }
+
+  /**
+   * Create a seeder.
+   *
+   * @param {string} name The name of the seeder
+   * @returns {boolean} true if the seeder file was created successfully
+   */
+  async createSeeder(name, {
+    template = 'vanilla'
+  } = {}) {
+    let self = this;
+
+    return new Promise(function(resolve, reject) {
+      template = template.toLowerCase();
+      name = ChangeCase.snakeCase(name);
+
+      let templateFileExtension = '';
+
+      switch (template) {
+        case 'vanilla':
+        case 'es6':
+        default:
+          templateFileExtension = '.js';
+          break;
+      }
+
+      let fileName = name;
+      let fileExtension = '.js';
+      let filePath = path.join(self._seedersDir, fileName + fileExtension);
+
+      if (fs.existsSync(filePath)) {
+        return reject(new Error('The file to generate seems to have already been created, [' + filePath + ']'));
+      } else {
+        let stream = fs.createReadStream(path.resolve(__dirname, 'stubs', 'seeders', template + templateFileExtension)).pipe(fs.createWriteStream(filePath));
 
         stream.on('error', reject);
         stream.on('close', function () {
@@ -373,6 +430,58 @@ export default class Mogront {
     }
 
     return rolledback;
+  }
+
+  /**
+   * Execute the seeders.
+   *
+   * @returns {Promise<Array>} All of the seeders that were executed
+   */
+  async seed() {
+    let connection = await this.mongo();
+
+    let db = connection.db(this._db);
+
+    let seeders = fs.readdirSync(this._seedersDir);
+    let success = [];
+    let executedOn = new Date();
+
+    for (let i = 0; i < seeders.length; i++) {
+      let seederPath = path.join(this.getSeedersDirectory(), seeders[i]);
+      let seeder = null;
+      try {
+        seeder = require(seederPath);
+      } catch (error) {
+        throw new CombineErrors([
+          Error('Unable to find the seeder at the specified path [' + seederPath + ']'),
+          error
+        ]);
+      }
+
+      try {
+        let result = await seeder.run(db);
+
+        if (result instanceof Promise) {
+          result = await result;
+        }
+
+        let seederFile = path.parse(path.join(this.getSeedersDirectory(), seeders[i]));
+        let seederFileName = seederFile.name;
+
+        success.push({
+          name: seederFileName,
+          status: 'EXECUTED',
+          executedOn
+        });
+      } catch (error) {
+        throw new CombineErrors([
+          new Error('[' + seeders[i] + '] failed to seed.'),
+          error
+        ]);
+      }
+    }
+
+    return success;
   }
 
 }

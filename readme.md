@@ -22,6 +22,7 @@ is down to the recommended use of the cli, see further instructions below.
 
 - `collectionName` - _[Optional]_ The name of the collection that tracks migration state
 - `migrationsDir` - _[Optional]_ The path to the migrations directory
+- `seedersDir` - _[Optional]_ The path to the seeders directory
 - `db` - _[Required]_ The name of the database
 
 These fields are mandatory if you do not pass an instance of the `MongoDB.MongoClient`
@@ -45,6 +46,7 @@ This example is a json file, but you can also pass a javascript file which expor
   "password": "",
   "db": "mogronttest",
   "migrationsDir": "./migrations",
+  "seedersDir": "./seeders",
   "collectionName": "_migrations"
 }
 ```
@@ -59,7 +61,9 @@ babel-node ./node_modules/mogront/build/bin/cli.js --config="mogront.config.js" 
 ```
 
 Below are the following commands:
-- `create <name>` - This will create a migration file in the configured directory
+- `create:migration <name>` - This will create a migration file in the configured directory
+    - `--template` - is an option you can pass to the command, you may specify `vanilla` or `es6` with vanilla being CommonJS.
+- `create:seeder <name>` - This will create a seeder file in the configured directory
     - `--template` - is an option you can pass to the command, you may specify `vanilla` or `es6` with vanilla being CommonJS.
 - `state` - This will show you the state of the migrations in your directory
     - `--pending` - is an option you can pass to the command that will only show you which migrations are pending
@@ -91,11 +95,14 @@ You can then run the command like so `npm run mogront <command> <arguments>`
 - `Mogront#mongo` - Retrieves the `MongoDB.MongoClient` instance
 - `Mogront#dispose` - Disposes the `MongoDB.MongoClient` connection
 - `Mogront#isDisposed` - Checks if the connection has been disposed of
-- `Mogront#create(name, options)` - Creates a migration in the specified file
+- `Mogront#createMigration(name, options)` - Creates a migration in the specified file
     - `options.template` - Specify the migration template to use [`vanilla`, `es6`]
+- `Mogront#createSeeder(name, options)` - Creates a seeder in the specified file
+    - `options.template` - Specify the seeder template to use [`vanilla`, `es6`]
 - `Mogront#state` - Retrieves the state of the migrator
 - `Mogront#migrate` - Migrate all of the pending migrations
 - `Mogront#rollback(all)` - Rollback the last batch of migrations. Specifying true will rollback all of the migrations.
+- `Mogront#seed` - Execute all of the seeders
 
 ### Migration files
 
@@ -103,6 +110,16 @@ A migration file has to export two functions, an `up` and a `down` function, bot
 from the migrator, that is the open connection to the database driver set to the specific database.
 
 Here are the list of migration templates you can choose:
+
+- [vanilla][3]
+- [es6][4]
+
+### Seeder files
+
+A seeder file has to export a `run` function, the same as the migration files, the function is passed one parameter
+from the seeder, that is the open connection to the database driver set to the specific database.
+
+Here are the list of seeder templates you can choose:
 
 - [vanilla][3]
 - [es6][4]

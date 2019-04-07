@@ -35,8 +35,8 @@ const invoke = function(env) {
     .action(console.log);
 
   Commander
-    .command('create <name>')
-    .description('create a migration file')
+    .command('create:migration <name>')
+    .description('create a  migration file')
     .action(function(name){
       let config = getConfig(Commander.args[1].parent.config);
       let options = {
@@ -45,8 +45,27 @@ const invoke = function(env) {
 
       let mogront = new Mogront(null, config);
 
-      mogront.create(name, options).then((fileName) => {
+      mogront.createMigration(name, options).then((fileName) => {
         console.log('The migration '.green + name.yellow + ' has been created as '.green + '[' + fileName.yellow + ']' + ' using the '.green + options.template.yellow + ' template'.green);
+        return mogront.dispose();
+      }).then(() => {
+        process.exit(0);
+      }).catch((error) => { console.error(error); process.exit(1); });
+    });
+
+  Commander
+    .command('create:seeder <name>')
+    .description('create a seeder file')
+    .action(function(name){
+      let config = getConfig(Commander.args[1].parent.config);
+      let options = {
+        template: Commander.args[1].parent.template
+      };
+
+      let mogront = new Mogront(null, config);
+
+      mogront.createSeeder(name, options).then((fileName) => {
+        console.log('The seeder '.green + name.yellow + ' has been created as '.green + '[' + fileName.yellow + ']' + ' using the '.green + options.template.yellow + ' template'.green);
         return mogront.dispose();
       }).then(() => {
         process.exit(0);
@@ -65,11 +84,11 @@ const invoke = function(env) {
       mogront.state().then((state) => {
         if (state.length > 0) {
           state.forEach((k) => {
-            if (program.args[0].pending && !program.args[0].executed) {
+            if (Commander.args[0].pending && !Commander.args[0].executed) {
               if (k.status === 'PENDING') {
                 console.log(k.name.yellow + ' is currently ' + k.status.gray);
               }
-            } else if (program.args[0].executed && !program.args[0].pending) {
+            } else if (Commander.args[0].executed && !Commander.args[0].pending) {
               if (k.status === 'EXECUTED') {
                 console.log(k.name.yellow + ' has been ' + k.status.gray);
               }
@@ -127,6 +146,25 @@ const invoke = function(env) {
           });
         } else {
           console.log('Nothing to rollback'.green);
+        }
+        return mogront.dispose();
+      }).then(() => {
+        process.exit(0);
+      }).catch((error) => { console.error(error); process.exit(1); });
+    });
+
+  Commander
+    .command('seed')
+    .description('execute the seeders')
+    .action(function() {
+      let config = getConfig(Commander.args[0].parent.config);
+      let mogront = new Mogront(null, config);
+
+      mogront.seed().then((success) => {
+        if (success.length > 0) {
+          success.forEach((k) => {
+            console.log(k.name.green + ' has been executed successfully.');
+          });
         }
         return mogront.dispose();
       }).then(() => {
