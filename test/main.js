@@ -34,12 +34,35 @@ describe('mogront', () => {
     }).then(function() {
       return mogront.dispose();
     }).then(function() {
-      if (fs.existsSync(testOptions.migrationsDir)) {
-        return fs.remove(testOptions.migrationsDir, done);
-      } else {
-        return done();
-      }
+      return new Promise(function(resolve, reject) {
+        if (fs.existsSync(testOptions.migrationsDir)) {
+          return fs.remove(testOptions.migrationsDir, (err) => {
+            if (err) {
+              return reject();
+            } else {
+              return resolve();
+            }
+          });
+        } else {
+          return resolve();
+        }
+      });
+    }).then(function() {
+      return new Promise(function(resolve, reject) {
+        if (fs.existsSync(testOptions.seedersDir)) {
+          return fs.remove(testOptions.seedersDir, (err) => {
+            if (err) {
+              return reject();
+            } else {
+              return resolve();
+            }
+          });
+        } else {
+          return resolve();
+        }
+      });
     })
+    .then(() => done())
     .catch(function(error) {
       mogront.dispose().then(function(error2) {
         done(CombineErrors([error, error2]));
@@ -524,7 +547,100 @@ describe('mogront', () => {
    * Seeder tests
    */
   describe('seeder', () => {
+    let newSeederFile = null;
 
+    it('should create a seeder file with the specified name', function(done) {
+      try {
+        let mogront = new Mogront(null, testOptions);
+
+        mogront.createSeeder('add test user').then(function(fileName) {
+          if ((fileName.indexOf('add') > -1) && (fileName.indexOf('test') > -1) && (fileName.indexOf('user') > -1)) {
+            if (fs.existsSync(path.join(mogront.getSeedersDirectory(), fileName))) {
+              newSeederFile = path.parse(path.join(mogront.getSeedersDirectory(), fileName));
+              return done();
+            }
+          }
+
+          throw new Error('Unable to find the seeder file');
+        }).catch(done);
+      } catch (error) {
+        return done(error);
+      }
+    });
+
+    it('should not be able to find the file once it\'s been deleted', function(done) {
+      try {
+        let mogront = new Mogront(null, testOptions);
+
+        let seederFilePath = path.join(mogront.getSeedersDirectory(), newSeederFile.name + newSeederFile.ext);
+
+        if (fs.existsSync(seederFilePath)) {
+          fs.removeSync(seederFilePath);
+          done();
+        } else {
+          done(new Error('The file doesn\'t exist?'));
+        }
+      } catch (error) {
+        return done(error);
+      }
+    });
+
+    it('should copy the "test_seeders/add_user_seeder.js" file into the seeders directory', function(done) {
+      try {
+        let mogront = new Mogront(null, testOptions);
+
+        // Copy the file over into the migrations directory
+        let fileName = 'add_user_seeder.js';
+        let currentFilePath = path.resolve(__dirname, 'test_seeders', fileName);
+        let newFilePath = path.join(testOptions.seedersDir, fileName);
+
+        /**
+         * Create the file.
+         *
+         * There is no need to check if the file already exists withion the directory
+         * as the directory shouldn't exist. It is removed before the tests are executed.
+         */
+        let stream = fs.createReadStream(currentFilePath).pipe(fs.createWriteStream(newFilePath));
+
+        // Catch error on write stream
+        stream.on('error', done);
+
+        // Continue
+        stream.on('close', done);
+      } catch (error) {
+        return done(error);
+      }
+    });
+
+    it('should execute the already created test seeder', function(done) {
+      try {
+        let mogront = new Mogront(null, testOptions);
+
+        mogront.seed().then(function(state) {
+          Chai.expect(state).to.be.an('array');
+          Chai.expect(state).to.have.lengthOf(1);
+          Chai.expect(state[0]).to.have.property('name');
+          Chai.expect(state[0].name).to.equal('add_user_seeder');
+          Chai.expect(state[0]).to.have.property('status');
+          Chai.expect(state[0].status).to.equal('EXECUTED');
+
+          return true;
+        }).then(function(done) {
+          return mogront.mongo();
+        })
+        .then((mongo) => mongo.db(testOptions.db))
+        .then((database) => database.collection('users').findOne({ username: 'kieron' }))
+        .then((user) => {
+          Chai.expect(user).to.be.an('object');
+          Chai.expect(user).to.have.property('username');
+          Chai.expect(user.username).to.equal('kieron');
+
+          done();
+        }).catch(done);
+      } catch (error) {
+        return done(error);
+      }
+    });
   });
 
 });
