@@ -71,6 +71,7 @@ Below are the following commands:
 - `migrate` - This will execute the pending migrations
 - `rollback` - This will rollback the previous batch of migrations
     - `--all` - is an option you can pass to the command that will rollback all previously executed migrations
+- `seed` - This will execute the seeders
 
 The command became cumbersome, especially sharing between developers, it's recommended that you add it
 to your project's `package.json` as a script like so:
