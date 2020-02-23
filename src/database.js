@@ -17,7 +17,7 @@ export const getConnection = async function({ url, user, password, host, port, d
   if (!connection) {
     try {
       if (url) {
-        connection = await MongoClient.connect(url, { useNewUrlParser: true });
+        connection = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
       } else {
         let connectionURL = null;
 
