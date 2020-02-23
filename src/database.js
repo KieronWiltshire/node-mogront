@@ -16,9 +16,7 @@ let connection = null;
 export const getConnection = async function({ url, user, password, host, port, db } = {}) {
   if (!connection) {
     try {
-      if (url) {
-        connection = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
-      } else {
+      if (!url) {
         let connectionURL = null;
 
         if (user && password) {
@@ -43,8 +41,10 @@ export const getConnection = async function({ url, user, password, host, port, d
           connectionURL += '/' + db;
         }
 
-        connection = await MongoClient.connect('mongodb://' + connectionURL, { useNewUrlParser: true });
+        url = 'mongodb://' + connectionURL;
       }
+
+      connection = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
     } catch (error) {
       console.error(error);
     }
